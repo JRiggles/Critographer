@@ -63,6 +63,7 @@ class Critographer(tk.Tk):
             yscrollcommand=self.scrollbar_y.set,
         )
         # event bindings
+        self.bind('<Command-o>', self.load_map)  # open map
         self.canvas.bind('<Button-1>', self.start_stop_line)
         self.canvas.bind('<Motion>', self.draw_line)
         self.canvas.bind('<Button-3>', self.pan_start)
@@ -70,23 +71,26 @@ class Critographer(tk.Tk):
         self.canvas.bind('<MouseWheel>', self.vscroll)  # vertical scroll
         self.canvas.bind('<Shift-MouseWheel>', self.hscroll)  # horiz. scroll
         self.canvas.bind('<Command-MouseWheel>', self.zoom_canvas)  # TODO
-        # init empty set to store canvas items
-        self.saved_drawings = set()
         # init line_start coords (placeholder)
         self.line_start = (0, 0)
 
         self.load_map()
+        self.focus()
 
-    def load_map(self) -> None:
-        self.img_file = fd.askopenfilename(
-            defaultextension='jpg',
-            filetypes=[('Image files', '.gif .jpg .jpeg .png')],
-        )
+    def load_map(self, _event=None) -> None:
         scale = self.display_dpi / IMG_DPI
-        if self.img_file:
-            with Image.open(self.img_file) as img:
+        if (
+            img_file := fd.askopenfilename(
+                defaultextension='jpg',
+                filetypes=[('Image files', '.gif .jpg .jpeg .png')],
+            )
+        ):
+            # init empty set to store canvas items
+            self.saved_drawings = set()
+            # delete previous map, if any
+            self.canvas.delete('background_map')
+            with Image.open(img_file) as img:
                 width, height = img.size
-                print(width, height)
                 img = img.resize(
                     (int(scale * width), int(scale * height)),
                     resample=Image.Resampling.LANCZOS
